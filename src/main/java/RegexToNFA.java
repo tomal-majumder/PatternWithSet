@@ -328,20 +328,21 @@ public class RegexToNFA {
     public static void main(String[] args) throws IOException, InterruptedException {
         RegexToNFA converter = new RegexToNFA(1);
         NFA nfa1 = converter.convertToNFA("r1.?*.r2.?*.r5");
-        nfa1.generateDiagram("nfa_1");
-        NFA nfa2 = converter.convertToNFA("r1.?*.r5.?*.r8");
-        nfa2.generateDiagram("nfa_2");
+        //nfa1.generateDiagram("nfa_1");
+        NFA nfa2 = converter.convertToNFA("r2.?*.r5.?*.r3");
+        //nfa2.generateDiagram("nfa_2");
 //        NFA nfa3 = converter.convertToNFA("r2.?*.r8.?*.r12");
 //        nfa3.generateDiagram("nfa_3");
 //        //nfa.setID(1);
         DFA dfa1 = converter.convertToDFA(nfa1);
         //dfa1.minimizeDFA();
-        dfa1.generateDiagram("dfa_1");
+        //dfa1.generateDiagram("dfa_1");
         dfa1.minimizeDFA();
         dfa1.generateDiagram("min_dfa_1");
 
 //
         DFA dfa2 = converter.convertToDFA(nfa2);
+        //dfa2.generateDiagram("normal_dfa_2");
         dfa2.minimizeDFA();
         dfa2.generateDiagram("dfa_2");
 //        DFA dfa3 = converter.convertToDFA(nfa3);
@@ -372,7 +373,7 @@ public class RegexToNFA {
         mergedNFA.addAllAcceptedStatesFromOtherDFA(dfa1);
         mergedNFA.addAllAcceptedStatesFromOtherDFA(dfa2);
 //        //mergedNFA.addAllAcceptedStatesFromOtherDFA(dfa3);
-        mergedNFA.generateDiagram("Merged_NFA");
+        //mergedNFA.generateDiagram("Merged_NFA");
         DFA mergedDFA = converter.convertToDFA(mergedNFA);
 ////        DFA dfa1 = converter.convertToDFA(nfa3);
 ////        System.out.println(dfa.getId());

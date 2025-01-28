@@ -233,108 +233,7 @@ public class DFA {
         Process process = pb.start();
         process.waitFor();
     }
-//    public void minimizeDFA() {
-//        Set<Integer> allStates = new HashSet<>();
-//        allStates.add(startState);
-//        for (Map.Entry<Integer, Map<String, Set<Integer>>> entry : transitions.entrySet()) {
-//            allStates.add(entry.getKey());
-//            for (Set<Integer> toStates : entry.getValue().values()) {
-//                allStates.addAll(toStates);
-//            }
-//        }
-//
-//        // Initial partition: accepting and non-accepting states
-//        Set<Integer> nonAcceptStates = new HashSet<>(allStates);
-//        nonAcceptStates.removeAll(acceptStates);
-//        Set<Set<Integer>> partition = new HashSet<>();
-//        partition.add(acceptStates);
-//        partition.add(nonAcceptStates);
-//
-//        Queue<Set<Integer>> workQueue = new LinkedList<>(partition);
-//        while (!workQueue.isEmpty()) {
-//            Set<Integer> current = workQueue.poll();
-//            for (String symbol : getAllSymbols()) {
-//                //go thrugh each symbol
-//                Set<Integer> X = new HashSet<>();
-//
-//                for (int state : allStates) {
-//                    //for each state in DFA
-//                    Map<String, Set<Integer>> stateTransitions = transitions.getOrDefault(state, new HashMap<>());
-//                    Set<Integer> toStates = stateTransitions.getOrDefault(symbol, new HashSet<>());
-//                    if (!Collections.disjoint(toStates, current)) {
-//                        X.add(state);
-//                    }
-//                }
-//
-//                Set<Set<Integer>> newPartition = new HashSet<>();
-//                for (Set<Integer> Y : partition) {
-//                    Set<Integer> intersection = new HashSet<>(Y);
-//                    intersection.retainAll(X);
-//                    Set<Integer> difference = new HashSet<>(Y);
-//                    difference.removeAll(X);
-//
-//                    if (!intersection.isEmpty() && !difference.isEmpty()) {
-//                        newPartition.add(intersection);
-//                        newPartition.add(difference);
-//                        workQueue.add(intersection);
-//                        workQueue.add(difference);
-//                    } else {
-//                        newPartition.add(Y);
-//                    }
-//                }
-//                partition = newPartition;
-//            }
-//        }
-//
-//        // Create new minimized DFA
-//        Map<Integer, Integer> stateMapping = new HashMap<>();
-//        int newStateID = StateIDGenerator.generateStateID();
-//        for (Set<Integer> block : partition) {
-//            int representative = block.iterator().next();
-//            for (int state : block) {
-//                stateMapping.put(state, newStateID);
-//            }
-//            newStateID = StateIDGenerator.generateStateID();
-//        }
-//
-//        // Update transitions and accept states
-//        Map<Integer, Map<String, Set<Integer>>> newTransitions = new HashMap<>();
-//        for (Map.Entry<Integer, Map<String, Set<Integer>>> entry : transitions.entrySet()) {
-//            int fromState = stateMapping.get(entry.getKey());
-//            for (Map.Entry<String, Set<Integer>> transEntry : entry.getValue().entrySet()) {
-//                String symbol = transEntry.getKey();
-//                int toState = stateMapping.get(transEntry.getValue().iterator().next());
-//                newTransitions
-//                        .computeIfAbsent(fromState, k -> new HashMap<>())
-//                        .computeIfAbsent(symbol, k -> new HashSet<>())
-//                        .add(toState);
-//            }
-//        }
-//
-//        Set<Integer> newAcceptStates = new HashSet<>();
-//        for (int acceptState : acceptStates) {
-//            newAcceptStates.add(stateMapping.get(acceptState));
-//        }
-//
-//        // Update DFA
-//        this.startState = stateMapping.get(startState);
-//        this.transitions = newTransitions;
-//        this.acceptStates = newAcceptStates;
-//
-//        //update the map
-//        acceptedNFAIDMap.clear();
-//        for (Integer element : newAcceptStates) {
-//            acceptedNFAIDMap.computeIfAbsent(element, k -> new HashSet<>()).add(id);
-//        }
-//    }
 
-//    private Set<String> getAllSymbols() {
-//        Set<String> symbols = new HashSet<>();
-//        for (Map<String, Set<Integer>> symbolMap : transitions.values()) {
-//            symbols.addAll(symbolMap.keySet());
-//        }
-//        return symbols;
-//    }
 public void minimizeDFA() {
     // Step 1: Collect all states
     Set<Integer> allStates = new HashSet<>();
@@ -421,11 +320,73 @@ public void minimizeDFA() {
             for (int toState : toStates) {
                 newToStates.add(stateMapping.get(toState));
             }
+            if(fromState == 58){
+                System.out.println("Lemme know");
+            }
+//            newTransitions
+//                    .computeIfAbsent(fromState, k -> new HashMap<>())
+//                    .computeIfAbsent(symbolSet, k -> new HashSet<>())
+//                    .addAll(newToStates);
 
-            newTransitions
-                    .computeIfAbsent(fromState, k -> new HashMap<>())
-                    .computeIfAbsent(symbolSet, k -> new HashSet<>())
-                    .addAll(newToStates);
+            Map<Set<String>, Set<Integer>> trans = newTransitions.computeIfAbsent(fromState, k -> new HashMap<>());
+            for(int tostate: newToStates){
+                boolean transitionUpdated = false;
+
+                // Check if the target state `toState` already exists in the map
+                for (Map.Entry<Set<String>, Set<Integer>> e : trans.entrySet()) {
+                    Set<String> s1 = e.getKey();
+                    Set<Integer> t1 = e.getValue();
+
+                    // If the target state already exists, update the symbol set
+                    if (t1.contains(tostate)) {
+                        s1.addAll(symbolSet); // Add the symbol to the existing set
+                        transitionUpdated = true;
+                        break;
+                    }
+
+                    if(s1.contains(symbolSet)){
+                        t1.add(tostate);
+                        transitionUpdated = true;
+                        break;
+                    }
+                }
+                if(!transitionUpdated){
+                    Set<String> newSymbolSet = new HashSet<>();
+                    newSymbolSet.addAll(symbolSet);
+                    trans.put(newSymbolSet, new HashSet<>(Collections.singleton(tostate)));
+                }
+
+            }
+            /*
+           boolean transitionUpdated = false;
+
+        // Check if the target state `toState` already exists in the map
+        for (Map.Entry<Set<String>, Set<Integer>> entry : stateTransitions.entrySet()) {
+            Set<String> symbolSet = entry.getKey();
+            Set<Integer> targetStates = entry.getValue();
+
+            // If the target state already exists, update the symbol set
+            if (targetStates.contains(toState)) {
+                symbolSet.add(symbol); // Add the symbol to the existing set
+                transitionUpdated = true;
+                break;
+            }
+
+            if(symbolSet.contains(symbol)){
+                targetStates.add(toState);
+                transitionUpdated = true;
+                break;
+            }
+        }
+
+        // If no matching target state exists, create a new entry
+        if (!transitionUpdated) {
+            Set<String> newSymbolSet = new HashSet<>();
+            newSymbolSet.add(symbol);
+            stateTransitions.put(newSymbolSet, new HashSet<>(Collections.singleton(toState)));
+        }
+
+         */
         }
     }
 
