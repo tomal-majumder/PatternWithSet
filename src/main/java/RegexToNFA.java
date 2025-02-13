@@ -326,10 +326,10 @@ public class RegexToNFA {
     }
 
     public static void main(String[] args) throws IOException, InterruptedException {
-        RegexToNFA converter = new RegexToNFA(1);
-        NFA nfa1 = converter.convertToNFA("r1.?*.r2.?*.r5");
+        RegexToNFA converter = new RegexToNFA(2);
+        NFA nfa1 = converter.convertToNFA("R1.R2.R3");
         //nfa1.generateDiagram("nfa_1");
-        NFA nfa2 = converter.convertToNFA("r2.?*.r5.?*.r3");
+        NFA nfa2 = converter.convertToNFA("r2.r6.r8");
         //nfa2.generateDiagram("nfa_2");
 //        NFA nfa3 = converter.convertToNFA("r2.?*.r8.?*.r12");
 //        nfa3.generateDiagram("nfa_3");
@@ -378,7 +378,7 @@ public class RegexToNFA {
 ////        DFA dfa1 = converter.convertToDFA(nfa3);
 ////        System.out.println(dfa.getId());
 ////        dfa.generateDiagram("dfa_thompson");
-        mergedDFA.minimizeDFA();
+        //mergedDFA.minimizeDFA();
         mergedDFA.generateDiagram("merged_DFA");
         System.out.println("Printed");
     }
