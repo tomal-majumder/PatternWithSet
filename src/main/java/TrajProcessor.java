@@ -8,7 +8,7 @@ import com.esri.core.geometry.Point;
 public class TrajProcessor {
 
     public static void main(String[] args) {
-        String xmlFilePath = "/Users/tomal/Desktop/MyWorkspace/Winter2025/Sumo_resource/LA_sumo/trajectories.xml"; // Update this path
+        String xmlFilePath = "/home/tmaju002/Research/codes/Data/TrajectoryData/trajectories.xml"; // Update this path
         Map<String, List<Point>> trajectories = parseTrajectories(xmlFilePath);
 
         // Example: Print trajectories
