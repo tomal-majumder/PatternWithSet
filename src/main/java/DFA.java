@@ -7,33 +7,35 @@ public class DFA {
     private int startState; // Start state ID
     private Set<Integer> acceptStates; // Set of accepting state IDs
     //private Map<Integer, Map<String, Set<Integer>>> transitions; // Transition table
-    private Map<Integer, Map<Set<String>, Set<Integer>>> transitions; // Transition table
+    public Map<Integer, Map<Set<String>, Set<Integer>>> transitions; // Transition table
     int numberOfSymbols;
     Set<String> allSymbolSet = new HashSet<>();
 
     public Map<Integer, HashSet<Integer>> acceptedNFAIDMap;
 
-    public DFA(int type) {
+    public DFA(Set<String> allSymbolSet) {
         //this.id = AutomatonIDGenerator.generateAutomatonID(); // Unique ID for this DFA
         this.startState = StateIDGenerator.generateStateID(); // Get unique ID from StateIDGenerator
         this.acceptStates = new HashSet<>();
         this.transitions = new HashMap<>();
         this.acceptedNFAIDMap = new HashMap<>();
-        if (type == 1) {
-            this.numberOfSymbols = Constants.NUMBER_OF_CELLS;
-
-            // Generate strings r1, r2, ..., rN and add to allSymbolSet
-            for (int i = 1; i <= this.numberOfSymbols; i++) {
-                this.allSymbolSet.add("r" + i);
-            }
-        } else if (type == 2) {
-            this.numberOfSymbols = Constants.NUMBER_OF_REGIONS;
-
-            // Generate strings R1, R2, ..., RN and add to allSymbolSet
-            for (int i = 1; i <= this.numberOfSymbols; i++) {
-                this.allSymbolSet.add("R" + i);
-            }
-        }
+        this.numberOfSymbols = allSymbolSet.size();
+        this.allSymbolSet.addAll(allSymbolSet);
+//        if (type == 1) {
+//            this.numberOfSymbols = Constants.NUMBER_OF_CELLS;
+//
+//            // Generate strings r1, r2, ..., rN and add to allSymbolSet
+//            for (int i = 1; i <= this.numberOfSymbols; i++) {
+//                this.allSymbolSet.add("r" + i);
+//            }
+//        } else if (type == 2) {
+//            this.numberOfSymbols = Constants.NUMBER_OF_REGIONS;
+//
+//            // Generate strings R1, R2, ..., RN and add to allSymbolSet
+//            for (int i = 1; i <= this.numberOfSymbols; i++) {
+//                this.allSymbolSet.add("R" + i);
+//            }
+//        }
     }
 
     public int getId() {
@@ -320,9 +322,9 @@ public void minimizeDFA() {
             for (int toState : toStates) {
                 newToStates.add(stateMapping.get(toState));
             }
-            if(fromState == 58){
-                System.out.println("Lemme know");
-            }
+//            if(fromState == 58){
+//                System.out.println("Lemme know");
+//            }
 //            newTransitions
 //                    .computeIfAbsent(fromState, k -> new HashMap<>())
 //                    .computeIfAbsent(symbolSet, k -> new HashSet<>())

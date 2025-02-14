@@ -3,9 +3,10 @@ import java.util.*;
 
 public class RegexToNFA {
     // Converts a regular expression pattern into an NFA
-    int type;
-    RegexToNFA(int type){
-        this.type = type;
+    Set<String> allSymbolSet;
+    RegexToNFA(Set<String> allSymbolSet){
+        this.allSymbolSet = new HashSet<>();
+        this.allSymbolSet.addAll(allSymbolSet);
     }
     public NFA convertToNFA(String regex) {
         Stack<NFA> operands = new Stack<>();
@@ -25,7 +26,8 @@ public class RegexToNFA {
                     StringBuilder transition = new StringBuilder();
                     transition.append(regex.charAt(idx));
 
-                    while (idx + 1 < regex.length() && Character.isDigit(regex.charAt(idx + 1))) {
+                    while (i + 1 < regex.length() &&
+                            (Character.isLetterOrDigit(regex.charAt(i + 1)) || regex.charAt(i + 1) == '_')) {
                         idx++;
                         transition.append(regex.charAt(idx));
                     }
@@ -37,7 +39,8 @@ public class RegexToNFA {
                 else{
                     StringBuilder transition = new StringBuilder();
                     transition.append(c);
-                    while (i + 1 < regex.length() && Character.isDigit(regex.charAt(i + 1))) {
+                    while (i + 1 < regex.length() &&
+                            (Character.isLetterOrDigit(regex.charAt(i + 1)) || regex.charAt(i + 1) == '_')) {
                         i++;
                         transition.append(regex.charAt(i));
                     }
@@ -132,7 +135,7 @@ public class RegexToNFA {
 
     // Constructs an NFA for a single transition
     private NFA singleTransition(String transition) {
-        NFA nfa = new NFA(type);
+        NFA nfa = new NFA(allSymbolSet);
         int start = nfa.getStartState();
         int accept = StateIDGenerator.generateStateID();
         nfa.addTransition(start, transition, accept);
@@ -142,7 +145,7 @@ public class RegexToNFA {
 
     // Concatenates two NFAs
     private NFA concatenation(NFA nfa1, NFA nfa2) {
-        NFA resultNFA = new NFA(type);
+        NFA resultNFA = new NFA(allSymbolSet);
         resultNFA.getTransitions().putAll(nfa1.getTransitions());
         resultNFA.setStartState(nfa1.getStartState());
         // Add epsilon transitions from each accept state of nfa1 to the start state of nfa2
@@ -161,7 +164,7 @@ public class RegexToNFA {
 
     // Unions two NFAs
     private NFA union(NFA nfa1, NFA nfa2) {
-        NFA resultNFA = new NFA(type);
+        NFA resultNFA = new NFA(allSymbolSet);
         int newStart = resultNFA.getStartState();
         int newAccept = StateIDGenerator.generateStateID();
 
@@ -189,7 +192,7 @@ public class RegexToNFA {
 
     // Applies the Kleene star operation to an NFA
     private NFA kleeneStar(NFA nfa) {
-        NFA starNFA = new NFA(type);
+        NFA starNFA = new NFA(allSymbolSet);
         int newStart = starNFA.getStartState();
         int newAccept = StateIDGenerator.generateStateID();
 
@@ -212,7 +215,7 @@ public class RegexToNFA {
     }
     // **NEWLY ADDED: Applies the + operator (one or more occurrences) to an NFA**
     private NFA oneOrMore(NFA nfa) {
-        NFA plusNFA = new NFA(type);
+        NFA plusNFA = new NFA(allSymbolSet);
         int newStart = plusNFA.getStartState();
         int newAccept = StateIDGenerator.generateStateID();
 
@@ -244,7 +247,7 @@ public class RegexToNFA {
         dfaStates.put(startStateSet, startStateID);
         unprocessedStates.add(startStateSet);
 
-        DFA dfa = new DFA(nfa.type);
+        DFA dfa = new DFA(nfa.allSymbolSet);
         dfa.setStartState(startStateID);
         dfa.setID(nfa.getId());
 
@@ -326,10 +329,25 @@ public class RegexToNFA {
     }
 
     public static void main(String[] args) throws IOException, InterruptedException {
-        RegexToNFA converter = new RegexToNFA(2);
-        NFA nfa1 = converter.convertToNFA("R1.R2.R3");
+        Set<String> symbolSet = new HashSet<>();
+        int type = Integer.parseInt(args[0]);
+        int numberOfSymbols = 5;
+        if(type == 1){
+            // Generate strings r1, r2, ..., rN and add to allSymbolSet
+            for (int i = 1; i <= numberOfSymbols; i++) {
+                symbolSet.add("r" + i);
+            }
+        }
+        else{
+            for (int i = 1; i <= numberOfSymbols; i++) {
+                symbolSet.add("R" + i);
+            }
+        }
+        RegexToNFA converter = new RegexToNFA(symbolSet);
+        NFA nfa1 = converter.convertToNFA("?*.r1.?*.r2.?*.r3");
         //nfa1.generateDiagram("nfa_1");
-        NFA nfa2 = converter.convertToNFA("r2.r6.r8");
+        NFA nfa2 = converter.convertToNFA("?*.r2.?*.r5.?*.r3");
+        //NFA nfa3 = converter.convertToNFA("r1.?*.r2.?*.r8");
         //nfa2.generateDiagram("nfa_2");
 //        NFA nfa3 = converter.convertToNFA("r2.?*.r8.?*.r12");
 //        nfa3.generateDiagram("nfa_3");
@@ -345,8 +363,9 @@ public class RegexToNFA {
         //dfa2.generateDiagram("normal_dfa_2");
         dfa2.minimizeDFA();
         dfa2.generateDiagram("dfa_2");
-//        DFA dfa3 = converter.convertToDFA(nfa3);
-        NFA mergedNFA = new NFA(converter.type);
+        //DFA dfa3 = converter.convertToDFA(nfa3);
+        //dfa3.minimizeDFA();
+        NFA mergedNFA = new NFA(converter.allSymbolSet);
         int mergedStart = mergedNFA.getStartState();
 //        mergedNFA.addTransition(mergedStart, "ε", nfa1.getStartState());
 //        mergedNFA.addTransition(mergedStart, "ε", nfa2.getStartState());
@@ -363,18 +382,19 @@ public class RegexToNFA {
 //        mergedNFA.generateDiagram("Merged_NFA");
         mergedNFA.addTransition(mergedStart, "ε", dfa1.getStartState());
         mergedNFA.addTransition(mergedStart, "ε", dfa2.getStartState());
-//        //mergedNFA.addTransition(mergedStart, "ε", dfa3.getStartState());
+        //mergedNFA.addTransition(mergedStart, "ε", dfa3.getStartState());
         mergedNFA.getTransitions().putAll(dfa1.getTransitions());
         mergedNFA.getTransitions().putAll(dfa2.getTransitions());
-//        //mergedNFA.getTransitions().putAll(dfa3.getTransitions());
+        //mergedNFA.getTransitions().putAll(dfa3.getTransitions());
         mergedNFA.getAcceptStates().addAll(dfa1.getAcceptStates());
         mergedNFA.getAcceptStates().addAll(dfa2.getAcceptStates());
-//        //mergedNFA.getAcceptStates().addAll(dfa3.getAcceptStates());
+        //mergedNFA.getAcceptStates().addAll(dfa3.getAcceptStates());
         mergedNFA.addAllAcceptedStatesFromOtherDFA(dfa1);
         mergedNFA.addAllAcceptedStatesFromOtherDFA(dfa2);
-//        //mergedNFA.addAllAcceptedStatesFromOtherDFA(dfa3);
-        //mergedNFA.generateDiagram("Merged_NFA");
+        //mergedNFA.addAllAcceptedStatesFromOtherDFA(dfa3);
+        mergedNFA.generateDiagram("Merged_NFA");
         DFA mergedDFA = converter.convertToDFA(mergedNFA);
+        mergedDFA.minimizeDFA();
 ////        DFA dfa1 = converter.convertToDFA(nfa3);
 ////        System.out.println(dfa.getId());
 ////        dfa.generateDiagram("dfa_thompson");

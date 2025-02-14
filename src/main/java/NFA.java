@@ -12,29 +12,31 @@ public class NFA {
     int numberOfSymbols;
     Set<String> allSymbolSet = new HashSet<>();
     public int type;
-    public NFA(int type) {
+    public NFA(Set<String> allSymbolSet) {
         this.id = AutomatonIDGenerator.generateAutomatonID(); // Unique ID for this NFA
         this.startState = StateIDGenerator.generateStateID(); // Get unique ID from StateIDGenerator
         this.acceptStates = new HashSet<>();
         this.transitions = new HashMap<>();
         this.acceptedNFAIDMap = new HashMap<>();
-        this.type = type;
+//        this.type = type;
         // Determine the number of symbols and populate allSymbolSet
-        if (type == 1) {
-            this.numberOfSymbols = Constants.NUMBER_OF_CELLS;
-
-            // Generate strings r1, r2, ..., rN and add to allSymbolSet
-            for (int i = 1; i <= this.numberOfSymbols; i++) {
-                this.allSymbolSet.add("r" + i);
-            }
-        } else if (type == 2) {
-            this.numberOfSymbols = Constants.NUMBER_OF_REGIONS;
-
-            // Generate strings R1, R2, ..., RN and add to allSymbolSet
-            for (int i = 1; i <= this.numberOfSymbols; i++) {
-                this.allSymbolSet.add("R" + i);
-            }
-        }
+//        if (type == 1) {
+//            this.numberOfSymbols = Constants.NUMBER_OF_CELLS;
+//
+//            // Generate strings r1, r2, ..., rN and add to allSymbolSet
+//            for (int i = 1; i <= this.numberOfSymbols; i++) {
+//                this.allSymbolSet.add("r" + i);
+//            }
+//        } else if (type == 2) {
+//            this.numberOfSymbols = Constants.NUMBER_OF_REGIONS;
+//
+//            // Generate strings R1, R2, ..., RN and add to allSymbolSet
+//            for (int i = 1; i <= this.numberOfSymbols; i++) {
+//                this.allSymbolSet.add("R" + i);
+//            }
+//        }
+        this.numberOfSymbols = allSymbolSet.size();
+        this.allSymbolSet.addAll(allSymbolSet);
     }
 
     public int getId() {

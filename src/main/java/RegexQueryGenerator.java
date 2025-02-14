@@ -134,6 +134,23 @@ public class RegexQueryGenerator {
         }
     }
 
+    public List<String> readQueriesFromFile(String filePath) {
+        List<String> queries = new ArrayList<>();
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (!line.trim().isEmpty()) { // Skip empty lines
+                    queries.add(line.trim());
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return queries;
+    }
+
     public static void main(String[] args) {
         // Example data setup
         Map<String, Polygon> landmarkMap = new HashMap<>();
