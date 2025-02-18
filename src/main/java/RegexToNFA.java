@@ -330,7 +330,7 @@ public class RegexToNFA {
 
     public static void main(String[] args) throws IOException, InterruptedException {
         Set<String> symbolSet = new HashSet<>();
-        int type = Integer.parseInt(args[0]);
+        int type = 1;
         int numberOfSymbols = 5;
         if(type == 1){
             // Generate strings r1, r2, ..., rN and add to allSymbolSet
@@ -346,7 +346,7 @@ public class RegexToNFA {
         RegexToNFA converter = new RegexToNFA(symbolSet);
         NFA nfa1 = converter.convertToNFA("?*.r1.?*.r2.?*.r3");
         //nfa1.generateDiagram("nfa_1");
-        NFA nfa2 = converter.convertToNFA("?*.r2.?*.r5.?*.r3");
+        NFA nfa2 = converter.convertToNFA("?*.r1.?*.r2.?*.r4");
         //NFA nfa3 = converter.convertToNFA("r1.?*.r2.?*.r8");
         //nfa2.generateDiagram("nfa_2");
 //        NFA nfa3 = converter.convertToNFA("r2.?*.r8.?*.r12");
@@ -369,16 +369,16 @@ public class RegexToNFA {
         int mergedStart = mergedNFA.getStartState();
 //        mergedNFA.addTransition(mergedStart, "ε", nfa1.getStartState());
 //        mergedNFA.addTransition(mergedStart, "ε", nfa2.getStartState());
-////        mergedNFA.addTransition(mergedStart, "ε", nfa3.getStartState());
+////      mergedNFA.addTransition(mergedStart, "ε", nfa3.getStartState());
 //        mergedNFA.getTransitions().putAll(nfa1.getTransitions());
 //        mergedNFA.getTransitions().putAll(nfa2.getTransitions());
-////        mergedNFA.getTransitions().putAll(nfa3.getTransitions());
+////      mergedNFA.getTransitions().putAll(nfa3.getTransitions());
 //        mergedNFA.getAcceptStates().addAll(nfa1.getAcceptStates());
 //        mergedNFA.getAcceptStates().addAll(nfa2.getAcceptStates());
-////        mergedNFA.getAcceptStates().addAll(nfa3.getAcceptStates());
+////      mergedNFA.getAcceptStates().addAll(nfa3.getAcceptStates());
 //        mergedNFA.addAllAcceptedStatesFromOtherNFA(nfa1);
 //        mergedNFA.addAllAcceptedStatesFromOtherNFA(nfa2);
-////        mergedNFA.addAllAcceptedStatesFromOtherNFA(nfa3);
+////      mergedNFA.addAllAcceptedStatesFromOtherNFA(nfa3);
 //        mergedNFA.generateDiagram("Merged_NFA");
         mergedNFA.addTransition(mergedStart, "ε", dfa1.getStartState());
         mergedNFA.addTransition(mergedStart, "ε", dfa2.getStartState());
@@ -394,7 +394,7 @@ public class RegexToNFA {
         //mergedNFA.addAllAcceptedStatesFromOtherDFA(dfa3);
         mergedNFA.generateDiagram("Merged_NFA");
         DFA mergedDFA = converter.convertToDFA(mergedNFA);
-        mergedDFA.minimizeDFA();
+        //mergedDFA.minimizeDFA();
 ////        DFA dfa1 = converter.convertToDFA(nfa3);
 ////        System.out.println(dfa.getId());
 ////        dfa.generateDiagram("dfa_thompson");

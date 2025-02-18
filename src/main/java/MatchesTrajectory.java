@@ -4,10 +4,11 @@ import com.esri.core.geometry.Polygon;
 import java.util.*;
 
 public class MatchesTrajectory {
-    public void matches(List<Point> trajectory, DFA dfa, Map<String, Polygon> symbolGeometry, double thresholdDistanceMeters){
+    public Pair<Integer, List<RegionMatchResult>> matches(List<Point> trajectory, DFA dfa, Map<String, Polygon> symbolGeometry, double thresholdDistanceMeters){
         List<Integer> currentStates = new ArrayList<>();
         List<List<Point>> currentStatePartialMatches = new ArrayList<>();
-
+        List<RegionMatchResult> resultSet = new ArrayList<>();
+        int conditionCount = 0;
         currentStates.add(dfa.getStartState());
         currentStatePartialMatches.add(new ArrayList<>());
         Map<Integer, Map<Set<String>, Set<Integer>>> transitions = dfa.transitions;
@@ -18,7 +19,6 @@ public class MatchesTrajectory {
                 int currentState = currentStates.get(i);
                 List<Point> match = new ArrayList<>(currentStatePartialMatches.get(i));
                 //match.add(point);
-
                 if(transitions.containsKey(currentState)){
                     Map<Set<String>, Set<Integer>> symbolAndTo = transitions.get(currentState);
                     String nearestLandmark = null;
@@ -33,7 +33,7 @@ public class MatchesTrajectory {
                             //now check if point is near the polygon with some threshold.
                             //point to polygon distance
                             double distanceMeters = calculateDistanceToPolygon(point, symbolPolygon);
-
+                            conditionCount++;
                             if (distanceMeters <= thresholdDistanceMeters && distanceMeters < minDistanceMeters) {
                                 minDistanceMeters = distanceMeters;
                                 nearestLandmark = symbol;
@@ -52,9 +52,40 @@ public class MatchesTrajectory {
                     }
                 }
             }
+            if(uniqueNextStates.isEmpty()){
+                currentStates.clear();
+                currentStatePartialMatches.clear();
+                currentStates.add(dfa.getStartState());
+                currentStatePartialMatches.add(new ArrayList<>());
+            }
+            else{
+                currentStates = new ArrayList<>(uniqueNextStates);
+                currentStatePartialMatches.add(new ArrayList<>());
+                for(int i = 0; i < currentStates.size(); i++){
+                    int state = currentStates.get(i);
+                    if(dfa.getAcceptStates().contains(state)){
+                        resultSet.add(new RegionMatchResult(currentStatePartialMatches.get(i), dfa.acceptedNFAIDMap.get(state)));
+                    }
+                }
+            }
+            // Add start state again for possible subsequent matches
+            currentStates.add(dfa.getStartState());
+            currentStatePartialMatches.add(new ArrayList<>());
+        }
+        return new Pair<>(conditionCount, resultSet);
+
+    }
+    static class RegionMatchResult{
+        List<Point> trajectory;
+        HashSet<Integer> queryIDs;
+
+        public RegionMatchResult(List<Point> trajectory, HashSet<Integer> queryIDs){
+            this.trajectory = new ArrayList<>(trajectory);
+
+            // Create a new set to store a copy of the queryIDs
+            this.queryIDs = new HashSet<>(queryIDs);
         }
     }
-
     private double calculateDistanceToPolygon(Point point, Polygon polygon) {
         double minDistanceMeters = Double.MAX_VALUE;
 
