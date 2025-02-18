@@ -91,7 +91,7 @@ public class XMLPolygonParser {
         return polygon;
     }
 
-    private static void printStats() {
+    public static void printStats() {
         System.out.println("Total Polygons Loaded: " + geometryMap.size());
         System.out.println("Polygon Count by Type:");
         for (Map.Entry<String, Integer> entry : typeCount.entrySet()) {

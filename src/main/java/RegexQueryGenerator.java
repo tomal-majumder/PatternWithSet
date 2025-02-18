@@ -153,18 +153,22 @@ public class RegexQueryGenerator {
 
     public static void main(String[] args) {
         // Example data setup
-        Map<String, Polygon> landmarkMap = new HashMap<>();
-        Map<String, List<Point>> trajectoryMap = new HashMap<>();
+        String dataPath = "/Users/tomal/Desktop/MyWorkspace/Winter2025/Sumo_resource";
+        String trajectoryFilePath = dataPath + "/LA_sumo/LA_small/trajectories.xml";
+        String landmarkFilePath = dataPath + "/LA_sumo/LA_small/smallLA.poly.xml";
+        //get trajectory map
 
-        // Initialize with some example data...
-        // - landmarkMap.put("building1", somePolygon);
-        // - trajectoryMap.put("user1", listOfPoints);
+        Map<String, List<Point>> trajectories= TrajProcessor.parseTrajectories(trajectoryFilePath);
+        TrajectoryAnalyzer.generateStatistics(trajectories);
+        //get landmark map
+        XMLPolygonParser.parseXML(landmarkFilePath);
+        Map<String, Polygon> landmarks = XMLPolygonParser.geometryMap;
+        XMLPolygonParser.printStats();
 
-        double threshold = 100; // 100 meters threshold for landmark detection
-        RegexQueryGenerator generator = new RegexQueryGenerator(landmarkMap, trajectoryMap, threshold);
-
-        int numQueries = 10; // User-defined number of queries
-        List<String> queries = generator.generateQueries(numQueries);
-        generator.saveQueriesToFile(queries, "queries.txt");
+        int numQueries = 1000;
+        RegexQueryGenerator queryGenerator = new RegexQueryGenerator(landmarks, trajectories, 100);
+        List<String> queries = queryGenerator.generateQueries(numQueries);
+        queryGenerator.saveQueriesToFile(queries, "queries/queries" + numQueries + ".txt");
+        //if saved once
     }
 }

@@ -12,9 +12,12 @@ public class MatchesTrajectory {
         currentStates.add(dfa.getStartState());
         currentStatePartialMatches.add(new ArrayList<>());
         Map<Integer, Map<Set<String>, Set<Integer>>> transitions = dfa.transitions;
+        int lastAcceptedState = -1;
         for(Point point: trajectory){
             Set<Integer> uniqueNextStates = new HashSet<>();
-            Map<Integer, List<Point>> stateToPartialMatch = new HashMap<>();
+            List<List<Point>> nextPartialMatches = new ArrayList<>();
+
+             Map<Integer, List<Point>> stateToPartialMatch = new HashMap<>();
             for(int i = 0; i < currentStates.size(); i++){
                 int currentState = currentStates.get(i);
                 List<Point> match = new ArrayList<>(currentStatePartialMatches.get(i));
@@ -46,7 +49,8 @@ public class MatchesTrajectory {
                             Set<Integer> value = entry.getValue();
                             if(key.contains(nearestLandmark)){
                               match.add(point);
-                              uniqueNextStates.addAll(value);
+                              uniqueNextStates.add((Integer) value.toArray()[0]);
+                              nextPartialMatches.add((new ArrayList<>(match)));
                             }
                         }
                     }
@@ -55,16 +59,19 @@ public class MatchesTrajectory {
             if(uniqueNextStates.isEmpty()){
                 currentStates.clear();
                 currentStatePartialMatches.clear();
-                currentStates.add(dfa.getStartState());
-                currentStatePartialMatches.add(new ArrayList<>());
+//                currentStates.add(dfa.getStartState());
+//                currentStatePartialMatches.add(new ArrayList<>());
             }
             else{
                 currentStates = new ArrayList<>(uniqueNextStates);
-                currentStatePartialMatches.add(new ArrayList<>());
+                currentStatePartialMatches = nextPartialMatches;
                 for(int i = 0; i < currentStates.size(); i++){
                     int state = currentStates.get(i);
                     if(dfa.getAcceptStates().contains(state)){
-                        resultSet.add(new RegionMatchResult(currentStatePartialMatches.get(i), dfa.acceptedNFAIDMap.get(state)));
+                        if(lastAcceptedState != state){
+                            resultSet.add(new RegionMatchResult(currentStatePartialMatches.get(i), dfa.acceptedNFAIDMap.get(state)));
+                            lastAcceptedState = state;
+                        }
                     }
                 }
             }
@@ -86,6 +93,69 @@ public class MatchesTrajectory {
             this.queryIDs = new HashSet<>(queryIDs);
         }
     }
+    public Pair<Integer, Boolean> matchesOriginal(List<Point> trajectory, DFA dfa, Map<String, Polygon> symbolGeometry, double thresholdDistanceMeters) {
+        Set<Integer> currentStates = new HashSet<>();
+        currentStates.add(dfa.getStartState());
+        int conditionChecked = 0;
+        for (int i = 0; i < trajectory.size(); i++) {
+            Point point = trajectory.get(i);
+            Set<Integer> nextStates = new HashSet<>();
+            Map<Integer, Map<Set<String>, Set<Integer>>> transitions = dfa.transitions;
+            for (Integer state : currentStates) {
+                if (transitions.containsKey(state)) {
+                    Map<Set<String>, Set<Integer>> symbolAndTo = transitions.get(state);
+                    String nearestLandmark = null;
+                    double minDistanceMeters = Double.MAX_VALUE;
+                    for (Map.Entry<Set<String>, Set<Integer>> entry : symbolAndTo.entrySet()) {
+                        Set<String> key = entry.getKey();
+                        Set<Integer> value = entry.getValue();
+                        //go through each symbol of this set
+                        for (String symbol : key) {
+                            //get the geometry of the symbol
+                            Polygon symbolPolygon = symbolGeometry.get(symbol);
+                            //now check if point is near the polygon with some threshold.
+                            //point to polygon distance
+                            double distanceMeters = calculateDistanceToPolygon(point, symbolPolygon);
+                            conditionChecked++;
+                            //conditionCount++;
+                            if (distanceMeters <= thresholdDistanceMeters && distanceMeters < minDistanceMeters) {
+                                minDistanceMeters = distanceMeters;
+                                nearestLandmark = symbol;
+                            }
+                        }
+                    }
+                    if(nearestLandmark != null){
+                        for(Map.Entry<Set<String>, Set<Integer>> entry : symbolAndTo.entrySet()) {
+                            Set<String> key = entry.getKey();
+                            Set<Integer> value = entry.getValue();
+                            if(key.contains(nearestLandmark)){
+                                nextStates.add((Integer) value.toArray()[0]);
+                            }
+                        }
+                    }
+                }
+
+
+                if (nextStates.isEmpty()) {
+                    // Reset matching for the next possible sub-sequence
+                    return new Pair<>(conditionChecked, false);
+                } else {
+                    currentStates = nextStates;
+                    for (int current : currentStates) {
+                        if (dfa.getAcceptStates().contains(current)) {
+
+                            // Return the matched sequence if any match was successful
+                            return new Pair<>(conditionChecked, true);
+                        }
+                    }
+                }
+            }
+
+        }
+        return new Pair<>(conditionChecked, false);
+
+    }
+    // Return an empty list if no match was found
     private double calculateDistanceToPolygon(Point point, Polygon polygon) {
         double minDistanceMeters = Double.MAX_VALUE;
 

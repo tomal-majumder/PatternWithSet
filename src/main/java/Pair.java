@@ -23,4 +23,12 @@ public class Pair<L, R> {
     public void setRight(R right) {
         this.right = right;
     }
+
+    public L getFirst() {
+        return left;
+    }
+
+    public R getSecond() {
+        return right;
+    }
 }

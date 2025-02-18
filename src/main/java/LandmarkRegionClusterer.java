@@ -275,12 +275,12 @@ public class LandmarkRegionClusterer {
     }
     public static void main(String[] args) {
         String dataPath = "/Users/tomal/Desktop/MyWorkspace/Winter2025/Sumo_resource";
-        String landmarkFilePath = dataPath + "/LA_sumo/downtownLA.poly.xml";
+        String landmarkFilePath = dataPath + "/LA_sumo/LA_small/smallLA.poly.xml";
         XMLPolygonParser.parseXML(landmarkFilePath);
         Map<String, Polygon> landmarks = XMLPolygonParser.geometryMap;
-        LandmarkRegionClusterer clusterer = new LandmarkRegionClusterer(landmarks, 100, 2);
-//        clusterer.clusterLandmarksAndSave("cluster_output");
-//        clusterer.savePolygonToRegionMap("landmark_region");
+        LandmarkRegionClusterer clusterer = new LandmarkRegionClusterer(landmarks, 50, 2);
+        clusterer.clusterLandmarksAndSave("cluster_output");
+        clusterer.savePolygonToRegionMap("landmark_region");
         clusterer.visualizeClustersOnMap(clusterer.loadClustersFromFile("cluster_output"));
     }
 }
