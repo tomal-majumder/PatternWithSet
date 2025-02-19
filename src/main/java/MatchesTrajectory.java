@@ -68,10 +68,12 @@ public class MatchesTrajectory {
                 for(int i = 0; i < currentStates.size(); i++){
                     int state = currentStates.get(i);
                     if(dfa.getAcceptStates().contains(state)){
-                        if(lastAcceptedState != state){
-                            resultSet.add(new RegionMatchResult(currentStatePartialMatches.get(i), dfa.acceptedNFAIDMap.get(state)));
-                            lastAcceptedState = state;
-                        }
+                        resultSet.add(new RegionMatchResult(currentStatePartialMatches.get(i), dfa.acceptedNFAIDMap.get(state)));
+//
+//                        if(lastAcceptedState != state){
+//                            resultSet.add(new RegionMatchResult(currentStatePartialMatches.get(i), dfa.acceptedNFAIDMap.get(state)));
+//                            lastAcceptedState = state;
+//                        }
                     }
                 }
             }

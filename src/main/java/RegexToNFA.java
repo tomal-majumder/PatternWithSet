@@ -344,9 +344,9 @@ public class RegexToNFA {
             }
         }
         RegexToNFA converter = new RegexToNFA(symbolSet);
-        NFA nfa1 = converter.convertToNFA("?*.r1.?*.r2.?*.r3");
+        NFA nfa1 = converter.convertToNFA("r1.?*.r2.?*.r3");
         //nfa1.generateDiagram("nfa_1");
-        NFA nfa2 = converter.convertToNFA("?*.r1.?*.r2.?*.r4");
+        NFA nfa2 = converter.convertToNFA("r1.?*.r2.?*.r4");
         //NFA nfa3 = converter.convertToNFA("r1.?*.r2.?*.r8");
         //nfa2.generateDiagram("nfa_2");
 //        NFA nfa3 = converter.convertToNFA("r2.?*.r8.?*.r12");

@@ -32,7 +32,18 @@ public class Main {
         List<DFA> queryOriginalDFAs = new ArrayList<>();
         Map<Integer, DFA> originalDFAMap = new HashMap<>();
         Set<String> allSymbolSet = new HashSet<>(landmarks.keySet());
+        for (Map.Entry<String, Polygon> entry : landmarks.entrySet()) {
+            String landmark = entry.getKey();
+            if (!polygonToRegion.containsKey(landmark)) {
+                // Add the landmark as its own region
+                String newRegionName = "Region_" + landmark;
+                polygonToRegion.put(landmark, newRegionName);
+                regionMBR.put(newRegionName, entry.getValue());
+                System.out.println("Added new region for landmark: " + landmark);
+            }
+        }
         Set<String> allRegionSymbolSet = new HashSet<>(regionMBR.keySet());
+
         RegexToNFA regexToNFA = new RegexToNFA(allSymbolSet);
         List<DFA> queryRegionDFAs = new ArrayList<>();
         RegexToNFA regionRegexToNFA = new RegexToNFA(allRegionSymbolSet);
@@ -42,7 +53,6 @@ public class Main {
             dfa.minimizeDFA();
             queryOriginalDFAs.add(dfa);
             originalDFAMap.put(dfa.getId(), dfa);
-
             String[] queryCells = query.split("\\.");
             StringBuilder regexp = new StringBuilder();
             for(String cell: queryCells){
