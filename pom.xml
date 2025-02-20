@@ -4,10 +4,12 @@
   <groupId>org.example</groupId>
   <artifactId>PatternWithSets</artifactId>
   <version>1.0-SNAPSHOT</version>
-  <name>Archetype - PatternWithSets</name>
+    <packaging>pom</packaging>
+    <name>Archetype - PatternWithSets</name>
   <url>http://maven.apache.org</url>
 
-  <properties>
+
+    <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <arcgis.version>200.6.0</arcgis.version>
@@ -81,6 +83,7 @@
 
   </dependencies>
   <build>
+      <directory>target/classes</directory>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

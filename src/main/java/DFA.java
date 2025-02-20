@@ -1,3 +1,5 @@
+package main.java;
+
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
@@ -414,6 +416,61 @@ public void minimizeDFA() {
             allSymbolSets.addAll(stateTransitions.keySet()); // Add all symbol sets from each state's transitions
         }
         return allSymbolSets;
+    }
+    public void optimizeTransitions() {
+        int threshold = (int) (allSymbolSet.size() * 0.5); // 90% threshold
+        Map<Integer, Map<Set<String>, Set<Integer>>> optimizedTransitions = new HashMap<>();
+
+        for (Map.Entry<Integer, Map<Set<String>, Set<Integer>>> stateEntry : transitions.entrySet()) {
+            int fromState = stateEntry.getKey();
+            Map<Set<String>, Set<Integer>> stateTransitions = stateEntry.getValue();
+            Map<Set<String>, Set<Integer>> newStateTransitions = new HashMap<>();
+
+            for (Map.Entry<Set<String>, Set<Integer>> transitionEntry : stateTransitions.entrySet()) {
+                Set<String> symbolSet = transitionEntry.getKey();
+                Set<Integer> toStates = transitionEntry.getValue();
+
+                if (symbolSet.size() >= threshold) { // If it exceeds the threshold
+                    Set<String> remainingSymbols = new HashSet<>(allSymbolSet);
+                    remainingSymbols.removeAll(symbolSet); // Find missing symbols
+
+                    Set<String> negatedSet = new HashSet<>();
+                    negatedSet.add("ALL_BUT_" + String.join(",", remainingSymbols)); // Store as negation
+
+                    newStateTransitions.put(negatedSet, toStates);
+                } else {
+                    newStateTransitions.put(symbolSet, toStates);
+                }
+            }
+            optimizedTransitions.put(fromState, newStateTransitions);
+        }
+
+        // Update DFA transitions with optimized ones
+        transitions = optimizedTransitions;
+    }
+
+    public static void main(String[] args) throws IOException, InterruptedException {
+        Set<String> symbolSet = new HashSet<>();
+        int type = 1;
+        int numberOfSymbols = 5;
+        if(type == 1){
+            // Generate strings r1, r2, ..., rN and add to allSymbolSet
+            for (int i = 1; i <= numberOfSymbols; i++) {
+                symbolSet.add("r" + i);
+            }
+        }
+        else{
+            for (int i = 1; i <= numberOfSymbols; i++) {
+                symbolSet.add("R" + i);
+            }
+        }
+        RegexToNFA converter = new RegexToNFA(symbolSet);
+        NFA nfa1 = converter.convertToNFA("r1.?*.r2.?*.r3");
+        DFA dfa = converter.convertToDFA(nfa1);
+        dfa.minimizeDFA();
+        dfa.optimizeTransitions();
+        dfa.generateDiagram("dfa1_new");
+
     }
 
 }

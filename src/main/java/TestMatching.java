@@ -1,3 +1,5 @@
+package main.java;
+
 import java.io.IOException;
 import java.util.*;
 import com.esri.core.geometry.Point;
@@ -74,9 +76,9 @@ public class TestMatching {
 
         for (int i = 0; i < trajectories.size(); i++) {
             System.out.println("Testing Trajectory " + (i + 1));
-            Pair<Integer, List<MatchesTrajectory.RegionMatchResult>> result = matcher.matches(trajectories.get(i), dfa, symbolGeometry, thresholdDistanceMeters);
+            Pair<Integer, List<RegionMatchResult>> result = matcher.matches(trajectories.get(i), dfa, symbolGeometry, thresholdDistanceMeters, 1);
             System.out.println("Condition Count: " + result.getLeft());
-            for (MatchesTrajectory.RegionMatchResult r : result.getRight()) {
+            for (RegionMatchResult r : result.getRight()) {
 
                 System.out.println("Path Points: ");
                 r.trajectory.forEach(p -> System.out.printf("Lat: %.6f, Lon: %.6f%n", p.getY(), p.getX()));

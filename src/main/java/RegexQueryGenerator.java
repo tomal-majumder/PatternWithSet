@@ -1,3 +1,5 @@
+package main.java;
+
 import com.esri.core.geometry.*;
 import java.io.*;
 import java.util.*;
@@ -153,9 +155,9 @@ public class RegexQueryGenerator {
 
     public static void main(String[] args) {
         // Example data setup
-        String dataPath = "/Users/tomal/Desktop/MyWorkspace/Winter2025/Sumo_resource";
-        String trajectoryFilePath = dataPath + "/LA_sumo/LA_small/trajectories.xml";
-        String landmarkFilePath = dataPath + "/LA_sumo/LA_small/smallLA.poly.xml";
+        String dataPath = "/home/tmaju002/Research/codes/Data/TrajectoryData/LA_small/";
+        String trajectoryFilePath = dataPath + "trajectories.xml";
+        String landmarkFilePath = dataPath + "smallLA.poly.xml";
         //get trajectory map
 
         Map<String, List<Point>> trajectories= TrajProcessor.parseTrajectories(trajectoryFilePath);
@@ -165,7 +167,7 @@ public class RegexQueryGenerator {
         Map<String, Polygon> landmarks = XMLPolygonParser.geometryMap;
         XMLPolygonParser.printStats();
 
-        int numQueries = 1000;
+        int numQueries = 5;
         RegexQueryGenerator queryGenerator = new RegexQueryGenerator(landmarks, trajectories, 100);
         List<String> queries = queryGenerator.generateQueries(numQueries);
         queryGenerator.saveQueriesToFile(queries, "queries/queries" + numQueries + ".txt");

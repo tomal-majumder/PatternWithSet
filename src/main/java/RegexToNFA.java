@@ -1,3 +1,5 @@
+package main.java;
+
 import java.io.IOException;
 import java.util.*;
 
@@ -346,7 +348,7 @@ public class RegexToNFA {
         RegexToNFA converter = new RegexToNFA(symbolSet);
         NFA nfa1 = converter.convertToNFA("r1.?*.r2.?*.r3");
         //nfa1.generateDiagram("nfa_1");
-        NFA nfa2 = converter.convertToNFA("r1.?*.r2.?*.r4");
+        NFA nfa2 = converter.convertToNFA("r1.?*.r5.?*.r4");
         //NFA nfa3 = converter.convertToNFA("r1.?*.r2.?*.r8");
         //nfa2.generateDiagram("nfa_2");
 //        NFA nfa3 = converter.convertToNFA("r2.?*.r8.?*.r12");
@@ -399,6 +401,8 @@ public class RegexToNFA {
 ////        System.out.println(dfa.getId());
 ////        dfa.generateDiagram("dfa_thompson");
         //mergedDFA.minimizeDFA();
+        mergedDFA.generateDiagram("merged_DFA_without_not");
+        mergedDFA.optimizeTransitions();
         mergedDFA.generateDiagram("merged_DFA");
         System.out.println("Printed");
     }

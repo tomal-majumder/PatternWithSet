@@ -1,3 +1,5 @@
+package main.java;
+
 import com.esri.core.geometry.*;
 import org.jfree.chart.*;
 import org.jfree.chart.plot.*;

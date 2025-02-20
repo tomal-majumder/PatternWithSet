@@ -1,3 +1,5 @@
+package main.java;
+
 // Constants.java
 public class Constants {
     public static final int NUMBER_OF_CELLS = 5;
