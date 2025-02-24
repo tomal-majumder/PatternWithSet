@@ -1,4 +1,4 @@
-package main.java;
+
 
 public class AutomatonIDGenerator {
     private static int automatonCounter = 0; // Static counter for automaton IDs

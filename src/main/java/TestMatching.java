@@ -1,9 +1,9 @@
-package main.java;
+
 
 import java.io.IOException;
 import java.util.*;
-import com.esri.core.geometry.Point;
-import com.esri.core.geometry.Polygon;
+import com.esri.arcgisruntime.geometry.Point;
+import com.esri.arcgisruntime.geometry.Polygon;
 
 public class TestMatching {
 
@@ -44,16 +44,16 @@ public class TestMatching {
 
         // Define polygons for landmarks
         Map<String, Polygon> symbolGeometry = new HashMap<>();
-        symbolGeometry.put("A", createPolygon(-118.271201, 34.051288));
-        symbolGeometry.put("B", createPolygon(-118.271300, 34.051500));
-        symbolGeometry.put("C", createPolygon(-118.268926, 34.051288));
-        symbolGeometry.put("D", createPolygon(-118.268926, 34.051288));
-        symbolGeometry.put("E", createPolygon(-118.268000, 34.050500));
-        symbolGeometry.put("F", createPolygon(-118.268926, 34.053300));
-        symbolGeometry.put("G", createPolygon(-118.268926, 34.053300));
-        symbolGeometry.put("H", createPolygon(-118.260000, 34.055000));
-        symbolGeometry.put("I", createPolygon(-118.265000, 34.054500));
-        symbolGeometry.put("J", createPolygon(-118.258000, 34.056000));
+//        symbolGeometry.put("A", createPolygon(-118.271201, 34.051288));
+//        symbolGeometry.put("B", createPolygon(-118.271300, 34.051500));
+//        symbolGeometry.put("C", createPolygon(-118.268926, 34.051288));
+//        symbolGeometry.put("D", createPolygon(-118.268926, 34.051288));
+//        symbolGeometry.put("E", createPolygon(-118.268000, 34.050500));
+//        symbolGeometry.put("F", createPolygon(-118.268926, 34.053300));
+//        symbolGeometry.put("G", createPolygon(-118.268926, 34.053300));
+//        symbolGeometry.put("H", createPolygon(-118.260000, 34.055000));
+//        symbolGeometry.put("I", createPolygon(-118.265000, 34.054500));
+//        symbolGeometry.put("J", createPolygon(-118.258000, 34.056000));
 
         // Define a DFA with symbol sets as transitions
         DFA dfa = new DFA(symbolGeometry.keySet());
@@ -87,13 +87,13 @@ public class TestMatching {
         }
     }
 
-    private static Polygon createPolygon(double lon, double lat) {
-        Polygon polygon = new Polygon();
-        polygon.startPath(lon - 0.0005, lat - 0.0005);
-        polygon.lineTo(lon - 0.0005, lat + 0.0005);
-        polygon.lineTo(lon + 0.0005, lat + 0.0005);
-        polygon.lineTo(lon + 0.0005, lat - 0.0005);
-        polygon.closeAllPaths();
-        return polygon;
-    }
+//    private static Polygon createPolygon(double lon, double lat) {
+//        Polygon polygon = new Polygon();
+//        polygon.startPath(lon - 0.0005, lat - 0.0005);
+//        polygon.lineTo(lon - 0.0005, lat + 0.0005);
+//        polygon.lineTo(lon + 0.0005, lat + 0.0005);
+//        polygon.lineTo(lon + 0.0005, lat - 0.0005);
+//        polygon.closeAllPaths();
+//        return polygon;
+//    }
 }

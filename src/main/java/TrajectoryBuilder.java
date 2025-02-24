@@ -1,4 +1,4 @@
-package main.java;
+
 
 import com.esri.core.geometry.Point;
 import java.io.*;

@@ -1,4 +1,4 @@
-package main.java;
+
 
 public class Pair<L, R> {
     private L left;

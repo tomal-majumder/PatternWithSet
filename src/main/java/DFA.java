@@ -1,4 +1,4 @@
-package main.java;
+
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -43,7 +43,35 @@ public class DFA {
     public int getId() {
         return id;
     }
+    // Clone method
+    @Override
+    public DFA clone() {
+        DFA clonedDFA = new DFA(this.allSymbolSet); // Create a new DFA with copied symbols
+        clonedDFA.id = this.id;
+        clonedDFA.startState = this.startState;
+        clonedDFA.numberOfSymbols = this.numberOfSymbols;
 
+        // Deep copy acceptStates
+        clonedDFA.acceptStates = new HashSet<>(this.acceptStates);
+
+        // Deep copy transitions
+        clonedDFA.transitions = new HashMap<>();
+        for (Map.Entry<Integer, Map<Set<String>, Set<Integer>>> entry : this.transitions.entrySet()) {
+            Map<Set<String>, Set<Integer>> newInnerMap = new HashMap<>();
+            for (Map.Entry<Set<String>, Set<Integer>> innerEntry : entry.getValue().entrySet()) {
+                newInnerMap.put(new HashSet<>(innerEntry.getKey()), new HashSet<>(innerEntry.getValue()));
+            }
+            clonedDFA.transitions.put(entry.getKey(), newInnerMap);
+        }
+
+        // Deep copy acceptedNFAIDMap
+        clonedDFA.acceptedNFAIDMap = new HashMap<>();
+        for (Map.Entry<Integer, HashSet<Integer>> entry : this.acceptedNFAIDMap.entrySet()) {
+            clonedDFA.acceptedNFAIDMap.put(entry.getKey(), new HashSet<>(entry.getValue()));
+        }
+
+        return clonedDFA;
+    }
     public int getStartState() {
         return startState;
     }

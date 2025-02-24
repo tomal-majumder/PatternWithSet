@@ -1,6 +1,7 @@
-package main.java;
 
-import com.esri.core.geometry.Point;
+
+import com.esri.arcgisruntime.geometry.Point;
+import com.esri.arcgisruntime.geometry.Polygon;
 
 import java.util.ArrayList;
 import java.util.HashSet;

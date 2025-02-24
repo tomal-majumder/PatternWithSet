@@ -1,16 +1,14 @@
-package main.java;
-
+import com.esri.arcgisruntime.geometry.*;
 import org.w3c.dom.*;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.File;
 import java.util.*;
-import com.esri.core.geometry.*;
+
 import com.esri.arcgisruntime.mapping.view.MapView;
 import com.esri.arcgisruntime.mapping.Basemap;
 import com.esri.arcgisruntime.mapping.ArcGISMap;
 import com.esri.arcgisruntime.mapping.view.GraphicsOverlay;
-import com.esri.arcgisruntime.geometry.SpatialReferences;
 import com.esri.arcgisruntime.symbology.SimpleFillSymbol;
 import com.esri.arcgisruntime.symbology.SimpleLineSymbol;
 import com.esri.arcgisruntime.mapping.view.Graphic;
@@ -64,33 +62,49 @@ public class XMLPolygonParser {
     }
 
     private static Polygon createPolygon(String shape) {
-        Polygon polygon = new Polygon();
-        String[] points = shape.split(" ");
-        boolean firstPoint = true;
-        Point startPoint = null;
+        // Create a PointCollection with WGS84 spatial reference
+        // Initialize PointCollection with WGS84 SpatialReference
 
-        for (String pointStr : points) {
-            String[] coords = pointStr.split(",");
+        SpatialReference sourceSR = SpatialReference.create(4326); // WGS84
+        SpatialReference targetSR = SpatialReference.create(6423); // Web Mercator
+        PointCollection points = new PointCollection(targetSR);
+        // Split the input string into coordinate pairs
+        String[] pointPairs = shape.split(" ");
+
+        // Iterate over each coordinate pair
+        for (String pair : pointPairs) {
+            String[] coords = pair.split(",");
             if (coords.length == 2) {
-                double x = Double.parseDouble(coords[0]);
-                double y = Double.parseDouble(coords[1]);
-                Point point = new Point(x, y);
+                try {
+                    // Parse the coordinates
+                    double x = Double.parseDouble(coords[0]);
+                    double y = Double.parseDouble(coords[1]);
+                    Point originalPoint = new Point(x, y, SpatialReference.create(4326)); // Longitude, Latitude
+                    Point projectedPoint = (Point) GeometryEngine.project(originalPoint, targetSR);
 
-                if (firstPoint) {
-                    polygon.startPath(point);
-                    startPoint = point;
-                    firstPoint = false;
-                } else {
-                    polygon.lineTo(point);
+                    // Add the point to the collection
+
+                    points.add(projectedPoint);
+
+                } catch (NumberFormatException e) {
+                    // Handle the case where parsing fails
+                    System.err.println("Invalid coordinate format: " + pair);
                 }
             }
         }
 
-        if (startPoint != null) {
-            polygon.lineTo(startPoint);
-        }
+        // Create the polygon from the point collection
+        Polygon newPolygon = new Polygon(points);
 
-        return polygon;
+        // Verify the spatial reference
+//        if (newPolygon.getSpatialReference() == null) {
+//            System.err.println("Polygon spatial reference is null.");
+//        } else {
+//            System.out.println("Polygon created with spatial reference: " +
+//                    newPolygon.getSpatialReference().getWKText());
+//        }
+
+        return newPolygon;
     }
 
     public static void printStats() {

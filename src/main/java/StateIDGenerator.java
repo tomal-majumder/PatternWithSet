@@ -1,4 +1,4 @@
-package main.java;
+
 
 public class StateIDGenerator {
     private static int stateCounter = 0; // Static counter shared across the system

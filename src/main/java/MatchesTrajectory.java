@@ -1,7 +1,6 @@
-package main.java;
 
-import com.esri.core.geometry.Point;
-import com.esri.core.geometry.Polygon;
+
+import com.esri.arcgisruntime.geometry.*;
 
 import java.util.*;
 
@@ -38,7 +37,9 @@ public class MatchesTrajectory {
                             Polygon symbolPolygon = symbolGeometry.get(symbol);
                             //now check if point is near the polygon with some threshold.
                             //point to polygon distance
-                            double distanceMeters = calculateDistanceToPolygon(point, symbolPolygon);
+
+//                            double distanceMeters = calculateDistanceToPolygon(point, symbolPolygon);
+                            double distanceMeters = GeometryEngine.distanceBetween(point, symbolPolygon);
                             conditionCount++;
                             if (distanceMeters <= thresholdDistanceMeters && distanceMeters < minDistanceMeters) {
                                 minDistanceMeters = distanceMeters;
@@ -133,7 +134,7 @@ public class MatchesTrajectory {
                             Polygon symbolPolygon = symbolGeometry.get(symbol);
                             //now check if point is near the polygon with some threshold.
                             //point to polygon distance
-                            double distanceMeters = calculateDistanceToPolygon(point, symbolPolygon);
+                            double distanceMeters = GeometryEngine.distanceBetween(point, symbolPolygon);
                             conditionChecked++;
                             //conditionCount++;
                             if (distanceMeters <= thresholdDistanceMeters && distanceMeters < minDistanceMeters) {
@@ -174,7 +175,7 @@ public class MatchesTrajectory {
 
     }
 
-    public Pair<Integer, List<RegionMatchResult>> matchesUpdated(List<Point> trajectory, DFA dfa, Map<String, Polygon> symbolGeometry, double thresholdDistanceMeters, int option){
+    public Pair<Integer, List<RegionMatchResult>> matchesUpdated(List<Point> trajectory, DFA dfa, Map<String, Polygon> symbolGeometry, double thresholdDistanceMeters, int option, Map<Integer, DFA> dfaMap){
         List<Integer> currentStates = new ArrayList<>();
         List<List<Point>> currentStatePartialMatches = new ArrayList<>();
         List<RegionMatchResult> resultSet = new ArrayList<>();
@@ -185,7 +186,7 @@ public class MatchesTrajectory {
         int lastAcceptedState = -1;
         Set<Integer> visitedQueryIds = new HashSet<>();
         for(Point point: trajectory){
-            Set<Integer> uniqueNextStates = new HashSet<>();
+            List<Integer> uniqueNextStates = new ArrayList<>();
             List<List<Point>> nextPartialMatches = new ArrayList<>();
 
             Map<Integer, List<Point>> stateToPartialMatch = new HashMap<>();
@@ -210,7 +211,8 @@ public class MatchesTrajectory {
                                 for(String negatedSymbol: negatedSymbols){
                                     Polygon symbolPolygon = symbolGeometry.get(negatedSymbol);
                                     conditionCount++;
-                                    double distanceMeters = calculateDistanceToPolygon(point, symbolPolygon);
+                                    double distanceMeters = GeometryEngine.distanceBetween(point, symbolPolygon);
+
                                     if(distanceMeters <= thresholdDistanceMeters){
                                         goToNext = false;
                                         break;
@@ -218,11 +220,12 @@ public class MatchesTrajectory {
                                 }
                                 if(goToNext){
                                     //match.add(point);
-                                    if(!uniqueNextStates.contains((Integer) value.toArray()[0])){
-                                        uniqueNextStates.add((Integer) value.toArray()[0]);
-                                        nextPartialMatches.add((new ArrayList<>(match)));
-                                    }
-
+//                                    if(!uniqueNextStates.contains((Integer) value.toArray()[0])){
+//                                        uniqueNextStates.add((Integer) value.toArray()[0]);
+//                                        nextPartialMatches.add((new ArrayList<>(match)));
+//                                    }
+                                    uniqueNextStates.add((Integer) value.toArray()[0]);
+                                    nextPartialMatches.add(new ArrayList<>(match));
                                 }
                             }
                             else{
@@ -230,14 +233,19 @@ public class MatchesTrajectory {
                                 Polygon symbolPolygon = symbolGeometry.get(symbol);
                                 //now check if point is near the polygon with some threshold.
                                 //point to polygon distance
-                                double distanceMeters = calculateDistanceToPolygon(point, symbolPolygon);
+                                if (!point.getSpatialReference().equals(symbolPolygon.getSpatialReference())) {
+                                    System.out.println("Mismatch");
+                                }
+                                double distanceMeters = GeometryEngine.distanceBetween(point, symbolPolygon);
                                 conditionCount++;
                                 if(distanceMeters <= thresholdDistanceMeters){
                                     //match.add(point);
-                                    if(!uniqueNextStates.contains((Integer) value.toArray()[0])){
-                                        uniqueNextStates.add((Integer) value.toArray()[0]);
-                                        nextPartialMatches.add((new ArrayList<>(match)));
-                                    }
+//                                    if(!uniqueNextStates.contains((Integer) value.toArray()[0])){
+//                                        uniqueNextStates.add((Integer) value.toArray()[0]);
+//                                        nextPartialMatches.add((new ArrayList<>(match)));
+//                                    }
+                                    uniqueNextStates.add((Integer) value.toArray()[0]);
+                                    nextPartialMatches.add(new ArrayList<>(match));
                                 }
                             }
 
@@ -283,14 +291,17 @@ public class MatchesTrajectory {
                             return new Pair<>(conditionCount, resultSet);
                         }
                         if(option == 3){
-                            if(!visitedQueryIds.containsAll(dfa.acceptedNFAIDMap.get(state))){
-                                HashSet<Integer> queryIDs = dfa.acceptedNFAIDMap.get(state);
-                                for(int queryID : queryIDs){
-                                    System.out.println("To-do");
-                                }
-                                resultSet.add(new RegionMatchResult(currentStatePartialMatches.get(i), dfa.acceptedNFAIDMap.get(state)));
+                            resultSet.add(new RegionMatchResult(currentStatePartialMatches.get(i), dfa.acceptedNFAIDMap.get(state)));
 
-                            }
+//                            if(!visitedQueryIds.containsAll(dfa.acceptedNFAIDMap.get(state))){
+//                                HashSet<Integer> queryIDs = dfa.acceptedNFAIDMap.get(state);
+//                                for(int queryID : queryIDs){
+//                                    System.out.println("To-do");
+//                                    //need to do double-check , what do you need? match sequence, actual dfa (so send map here), matches call
+//
+//                                }
+//
+//                            }
                         }
 //
 //                        if(lastAcceptedState != state){
@@ -301,29 +312,110 @@ public class MatchesTrajectory {
                 }
             }
             // Add start state again for possible subsequent matches
-            currentStates.add(dfa.getStartState());
-            currentStatePartialMatches.add(new ArrayList<>());
+            //currentStates.add(dfa.getStartState());
+            //currentStatePartialMatches.add(new ArrayList<>());
         }
         return new Pair<>(conditionCount, resultSet);
 
     }
-    // Return an empty list if no match was found
-    private double calculateDistanceToPolygon(Point point, Polygon polygon) {
-        double minDistanceMeters = Double.MAX_VALUE;
 
-        for (int i = 0; i < polygon.getPathCount(); i++) {
-            for (int j = 0; j < polygon.getPointCount(); j++) {
-                Point polygonPoint = polygon.getPoint(j);
-                double distance = haversineDistance(point.getY(), point.getX(), polygonPoint.getY(), polygonPoint.getX());
+    public Pair<Integer, Boolean> matchesOriginalUpdated(List<Point> trajectory, DFA dfa, Map<String, Polygon> symbolGeometry, double thresholdDistanceMeters) {
+        List<Integer> currentStates = new ArrayList<>();
+        currentStates.add(dfa.getStartState());
+        int conditionChecked = 0;
+        for (int i = 0; i < trajectory.size(); i++) {
+            Point point = trajectory.get(i);
+            List<Integer> nextStates = new ArrayList<>();
+            Map<Integer, Map<Set<String>, Set<Integer>>> transitions = dfa.transitions;
+            for (Integer state : currentStates) {
+                if (transitions.containsKey(state)) {
+                    Map<Set<String>, Set<Integer>> symbolAndTo = transitions.get(state);
 
-                if (distance < minDistanceMeters) {
-                    minDistanceMeters = distance;
+                    for (Map.Entry<Set<String>, Set<Integer>> entry : symbolAndTo.entrySet()) {
+                        Set<String> key = entry.getKey();
+                        Set<Integer> value = entry.getValue();
+                        //go through each symbol of this set
+
+                        for(String symbol: key){
+                            if(symbol.contains("ALL_BUT_")){
+                                String[] negatedSymbols = symbol.split("_")[2].split(",");
+                                boolean goToNext = true;
+                                for(String negatedSymbol: negatedSymbols){
+                                    Polygon symbolPolygon = symbolGeometry.get(negatedSymbol);
+                                    conditionChecked++;
+                                    double distanceMeters = GeometryEngine.distanceBetween(point, symbolPolygon);
+                                    if(distanceMeters <= thresholdDistanceMeters){
+                                        goToNext = false;
+                                        break;
+                                    }
+                                }
+                                if(goToNext){
+                                    //match.add(point);
+//                                    if(!uniqueNextStates.contains((Integer) value.toArray()[0])){
+//                                        uniqueNextStates.add((Integer) value.toArray()[0]);
+//                                        nextPartialMatches.add((new ArrayList<>(match)));
+//                                    }
+                                    nextStates.add((Integer) value.toArray()[0]);
+                                }
+                            }
+                            else{
+                                //get the geometry of the symbol
+                                Polygon symbolPolygon = symbolGeometry.get(symbol);
+                                //now check if point is near the polygon with some threshold.
+                                //point to polygon distance
+                                double distanceMeters = GeometryEngine.distanceBetween(point, symbolPolygon);
+                                conditionChecked++;
+                                if(distanceMeters <= thresholdDistanceMeters){
+                                    //match.add(point);
+//                                    if(!uniqueNextStates.contains((Integer) value.toArray()[0])){
+//                                        uniqueNextStates.add((Integer) value.toArray()[0]);
+//                                        nextPartialMatches.add((new ArrayList<>(match)));
+//                                    }
+                                    nextStates.add((Integer) value.toArray()[0]);
+                                }
+                            }
+
+                        }
+                    }
+                }
+
+
+                if (nextStates.isEmpty()) {
+                    // Reset matching for the next possible sub-sequence
+                    return new Pair<>(conditionChecked, false);
+                } else {
+                    currentStates = nextStates;
+                    for (int current : currentStates) {
+                        if (dfa.getAcceptStates().contains(current)) {
+
+                            // Return the matched sequence if any match was successful
+                            return new Pair<>(conditionChecked, true);
+                        }
+                    }
                 }
             }
-        }
 
-        return minDistanceMeters;
+        }
+        return new Pair<>(conditionChecked, false);
+
     }
+    // Return an empty list if no match was found
+//    private double calculateDistanceToPolygon(Point point, Polygon polygon) {
+//
+//        double minDistanceMeters = Double.MAX_VALUE;
+//        for (int i = 0; i < polygon.getPathCount(); i++) {
+//            for (int j = 0; j < polygon.getPointCount(); j++) {
+//                Point polygonPoint = polygon.getPoint(j);
+//                double distance = haversineDistance(point.getY(), point.getX(), polygonPoint.getY(), polygonPoint.getX());
+//
+//                if (distance < minDistanceMeters) {
+//                    minDistanceMeters = distance;
+//                }
+//            }
+//        }
+//
+//        return minDistanceMeters;
+//    }
 
     private double haversineDistance(double lat1, double lon1, double lat2, double lon2) {
         final double R = 6371000; // Earth's radius in meters

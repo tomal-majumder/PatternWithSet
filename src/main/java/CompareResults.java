@@ -1,4 +1,4 @@
-package main.java;
+
 
 import java.io.*;
 import java.util.*;
@@ -6,8 +6,8 @@ import java.util.*;
 public class CompareResults {
 
     public static void main(String[] args) {
-        String separateFile = "results/10_separate_result.txt";
-        String mergedFile = "results/10_merged_result.txt";
+        String separateFile = "results/5_merged_result.txt";
+        String mergedFile = "results/5_merged_result_region.txt";
 
         Set<String> separateMatches = readMatches(separateFile);
         Set<String> mergedMatches = readMatches(mergedFile);

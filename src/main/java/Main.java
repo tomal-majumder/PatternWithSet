@@ -1,8 +1,5 @@
-package main.java;
-
-import com.esri.core.geometry.Point;
-import com.esri.core.geometry.Polygon;
-
+import com.esri.arcgisruntime.geometry.Point;
+import com.esri.arcgisruntime.geometry.Polygon;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
@@ -10,19 +7,19 @@ import java.util.*;
 //this is ultimate main class.
 public class Main {
     public static void main(String[] args) throws IOException, InterruptedException {
-        String dataPath = "/home/tmaju002/Research/codes/Data/TrajectoryData/LA_small/";
+        String dataPath = "/Users/tomal/Desktop/MyWorkspace/Winter2025/Sumo_resource/LA_sumo/LA_small/";
         String trajectoryFilePath = dataPath + "trajectories.xml";
         String landmarkFilePath = dataPath + "smallLA.poly.xml";
         //get trajectory map
-
         Map<String, List<Point>> trajectories= TrajProcessor.parseTrajectories(trajectoryFilePath);
         TrajectoryAnalyzer.generateStatistics(trajectories);
-        //get landmark map
         XMLPolygonParser.parseXML(landmarkFilePath);
         Map<String, Polygon> landmarks = XMLPolygonParser.geometryMap;
         XMLPolygonParser.printStats();
-
-        int numQueries = 5;
+        Map<String, Integer> trajectoryStatForMergedWithoutRegion = new HashMap<>();
+        Map<String, Integer> trajectoryStatForMergedWithRegion = new HashMap<>();
+        Map<String, Integer> trajectoryStatWIthoutMerging = new HashMap<>();
+        int numQueries = 1000;
         RegexQueryGenerator queryGenerator = new RegexQueryGenerator(landmarks, trajectories, 100);
         //List<String> queries = queryGenerator.generateQueries(numQueries);
         //queryGenerator.saveQueriesToFile(queries, "queries/queries" + numQueries + ".txt");
@@ -42,14 +39,13 @@ public class Main {
             String landmark = entry.getKey();
             if (!polygonToRegion.containsKey(landmark)) {
                 // Add the landmark as its own region
-                String newRegionName = "Region_" + landmark;
+                String newRegionName = "Region" + landmark;
                 polygonToRegion.put(landmark, newRegionName);
                 regionMBR.put(newRegionName, entry.getValue());
                 System.out.println("Added new region for landmark: " + landmark);
             }
         }
         Set<String> allRegionSymbolSet = new HashSet<>(regionMBR.keySet());
-
         RegexToNFA regexToNFA = new RegexToNFA(allSymbolSet);
         List<DFA> queryRegionDFAs = new ArrayList<>();
         RegexToNFA regionRegexToNFA = new RegexToNFA(allRegionSymbolSet);
@@ -57,13 +53,9 @@ public class Main {
             NFA nfa = regexToNFA.convertToNFA(query);
             DFA dfa = regexToNFA.convertToDFA(nfa);
             dfa.minimizeDFA();
+            dfa.optimizeTransitions();
             queryOriginalDFAs.add(dfa);
             originalDFAMap.put(dfa.getId(), dfa);
-
-            dfa.optimizeTransitions();
-            queryOriginalDFAsWithMinimizedTransitions.add(dfa);
-            originalDFAMapWithMinimizedTransition.put(dfa.getId(), dfa);
-
             String[] queryCells = query.split("\\.");
             StringBuilder regexp = new StringBuilder();
             for(String cell: queryCells){
@@ -82,13 +74,15 @@ public class Main {
             regionNFA.setId(dfa.getId());
             DFA regionDFA = regionRegexToNFA.convertToDFA(regionNFA);
             regionDFA.minimizeDFA();
+            regionDFA.optimizeTransitions();
+            if(regionDFA.getId() == 10 || regionDFA.getId() == 76){
+                regionDFA.generateDiagram("regionDFA" + regionDFA.getId());
+            }
             //queryOriginalDFAs.add(dfa);
             //originalDFAMap.put(dfa.getId(), dfa);
             queryRegionDFAs.add(regionDFA);
         }
-
         //Now do the merging
-
         //First: Prepare merged DFA on original symbol
         int originalStatesNumber = 0;
         for(int i = 0; i < queryOriginalDFAs.size(); i++){
@@ -108,7 +102,6 @@ public class Main {
         DFA mergedDFA = regexToNFA.convertToDFA(mergedNFA);
         mergedDFA.optimizeTransitions();
         System.out.println("Number of states in merged DFAs: " + mergedDFA.totalNumberOfStates());
-        mergedDFA.generateDiagram("Main_merged_dfa");
         //Second: Prepare Merged DFA on region symbol
         NFA mergedRegionNFA = new NFA(allRegionSymbolSet);
         int mergedRegionStart = mergedRegionNFA.getStartState();
@@ -118,12 +111,13 @@ public class Main {
             mergedRegionNFA.getAcceptStates().addAll(dfa.getAcceptStates());
             mergedRegionNFA.addAllAcceptedStatesFromOtherDFA(dfa);
         }
-        //mergedNFA.generateDiagram("Merged_NFA");
+//        mergedNFA.generateDiagram("Merged_NFA");
         DFA mergedRegionDFA = regionRegexToNFA.convertToDFA(mergedRegionNFA);
+        mergedRegionDFA.optimizeTransitions();
+        mergedRegionDFA.generateDiagram("merged_region_dfa");
         System.out.println("Number of states in merged Region DFAs: " + mergedRegionDFA.totalNumberOfStates());
 
         MatchesTrajectory matcher = new MatchesTrajectory();
-
         //Now matching with separate original DFAs first
         long startTime = System.nanoTime();
         String outputFileNameSeparate = "results/"+ numQueries + "_separate_result" + ".txt";
@@ -131,25 +125,31 @@ public class Main {
 //        HashMap<Integer, Integer> separateStatMap = new HashMap<>();
         int resultCount = 0;
         int totalConditionChecks = 0;
+        Map<String, Integer> pertrajMatcheInfo = new HashMap<>();
         for(Map.Entry<String, List<Point>> entry : trajectories.entrySet()) {
+            int perTrajChecks = 0;
+            int perTrajMatches = 0;
             String objectId = entry.getKey();
             List<Point> points = entry.getValue();
-            for(int i = 0; i < queryOriginalDFAsWithMinimizedTransitions.size(); i++){
-                DFA dfaToCheck = queryOriginalDFAsWithMinimizedTransitions.get(i);
-                Pair<Integer, List<RegionMatchResult>> matches = matcher.matchesUpdated(points, dfaToCheck, landmarks, 100, 1);
+            for(int i = 0; i < queryOriginalDFAs.size(); i++){
+                DFA dfaToCheck = queryOriginalDFAs.get(i);
+                Pair<Integer, List<RegionMatchResult>> matches = matcher.matchesUpdated(points, dfaToCheck, landmarks, 50, 1, originalDFAMap);
                 totalConditionChecks += matches.getLeft();
+                perTrajChecks += matches.getLeft();
                 for(int j = 0; j < matches.getRight().size(); j++){
                     RegionMatchResult regionMatchResult = matches.getRight().get(j);
                     resultCount++;
+                    perTrajMatches++;
                     List<Point> trajectory = regionMatchResult.trajectory;
                     writerSeparate.write(objectId + " is matched with Query id: "+ dfaToCheck.getId() + ": ");
                     for (Point point : trajectory) {
                         writerSeparate.write(point.toString());
                     }
                     writerSeparate.write(System.lineSeparator()); // Adds a new line after the output
-
                 }
             }
+            trajectoryStatWIthoutMerging.put(objectId, perTrajChecks);
+            pertrajMatcheInfo.put(objectId, perTrajMatches);
         }
         long endTime = System.nanoTime();
         // Calculate the elapsed time
@@ -170,8 +170,11 @@ public class Main {
         for(Map.Entry<String, List<Point>> entry : trajectories.entrySet()) {
             String objectId = entry.getKey();
             List<Point> points = entry.getValue();
-            Pair<Integer, List<RegionMatchResult>> matches = matcher.matchesUpdated(points, mergedDFA, landmarks, 100, 2);
+            int trajChecks = 0;
+            Pair<Integer, List<RegionMatchResult>> matches = matcher.matchesUpdated(points, mergedDFA, landmarks, 50, 2, originalDFAMap);
             totalConditionChecks += matches.getLeft();
+            trajChecks += matches.getLeft();
+            trajectoryStatForMergedWithoutRegion.put(objectId, trajChecks);
             for(int j = 0; j < matches.getRight().size(); j++){
                 RegionMatchResult regionMatchResult = matches.getRight().get(j);
                 resultCount++;
@@ -184,7 +187,6 @@ public class Main {
                     writeMerged.write(trajectory.get(k).toString());
                 }
                 writeMerged.write(System.lineSeparator()); // Adds a new line after the output
-
             }
 
         }
@@ -198,43 +200,57 @@ public class Main {
         writeMerged.close();
 
         //Now, we will see how region DFA goes:
-//        String outputFileNameMergedRegion = "results/"+ numQueries + "_merged_result_region" + ".txt";
-//        FileWriter writeMergedRegion = new FileWriter(outputFileNameMergedRegion);
+        String outputFileNameMergedRegion = "results/"+ numQueries + "_merged_result_region" + ".txt";
+        FileWriter writeMergedRegion = new FileWriter(outputFileNameMergedRegion);
 //        //HashMap<Integer, Integer> separateStatMap = new HashMap<>();
-//        startTime = System.nanoTime();
-//        resultCount = 0;
-//        totalConditionChecks = 0;
-//        for(Map.Entry<String, List<Point>> entry : trajectories.entrySet()) {
-//            String objectId = entry.getKey();
-//            List<Point> points = entry.getValue();
-//            Pair<Integer, List<MatchesTrajectory.RegionMatchResult>> matches = matcher.matches(points, mergedRegionDFA, regionMBR, 100, 3);
-//            totalConditionChecks += matches.getLeft();
-//            for(int j = 0; j < matches.getRight().size(); j++){
-//                MatchesTrajectory.RegionMatchResult regionMatchResult = matches.getRight().get(j);
-//                List<Point> trajectory = regionMatchResult.trajectory;
-//                HashSet<Integer> queryIDs = regionMatchResult.queryIDs;
-//                for(Integer queryID: queryIDs){
-//                    Pair<Integer, Boolean> integerBooleanPair = matcher.matchesOriginal(trajectory, originalDFAMap.get(queryID), landmarks, 100);
-//                    totalConditionChecks += integerBooleanPair.getLeft();
-//                    if(integerBooleanPair.getRight()){
-//                        resultCount++;
-//                        writeMergedRegion.write(objectId + " is matched with Query id: "+ queryID + ": ");
-//                        for (int k = 0; k < trajectory.size(); k++) {
-//                            writeMergedRegion.write(trajectory.get(k).toString());
-//                        }
-//                        writeMergedRegion.write(System.lineSeparator()); // Adds a new line after the output
-//                    }
-//                }
-//            }
-//
-//        }
-//        endTime = System.nanoTime();
-//        duration = endTime - startTime;
-//        durationInMillis = duration / 1_000_000;
-//
-//        System.out.println("Number of checks: " + totalConditionChecks);
-//        System.out.println("Number of matches: " + resultCount);
-//        System.out.println("Elapsed Time: " + durationInMillis);
-//        writeMergedRegion.close();
+        startTime = System.nanoTime();
+        resultCount = 0;
+        totalConditionChecks = 0;
+        for(Map.Entry<String, List<Point>> entry : trajectories.entrySet()) {
+            String objectId = entry.getKey();
+            List<Point> points = entry.getValue();
+            int trajChecks = 0;
+            Pair<Integer, List<RegionMatchResult>> matches = matcher.matchesUpdated(points, mergedRegionDFA, regionMBR, 20, 3, originalDFAMap);
+            totalConditionChecks += matches.getLeft();
+            trajChecks += matches.getLeft();
+            Set<Integer> matchedQueries = new HashSet<>();
+            for(int j = 0; j < matches.getRight().size(); j++){
+                RegionMatchResult regionMatchResult = matches.getRight().get(j);
+                List<Point> trajectory = regionMatchResult.trajectory;
+                HashSet<Integer> queryIDs = regionMatchResult.queryIDs;
+                for(Integer queryID: queryIDs){
+                    if(!matchedQueries.contains(queryID)){
+                        Pair<Integer, Boolean> integerBooleanPair = matcher.matchesOriginalUpdated(trajectory, originalDFAMap.get(queryID), landmarks, 100);
+                        totalConditionChecks += integerBooleanPair.getLeft();
+                        trajChecks += integerBooleanPair.getLeft();
+                        if(integerBooleanPair.getRight()){
+                            resultCount++;
+                            matchedQueries.add(queryID);
+                            writeMergedRegion.write(objectId + " is matched with Query id: "+ queryID + ": ");
+                            for (int k = 0; k < trajectory.size(); k++) {
+                                writeMergedRegion.write(trajectory.get(k).toString());
+                            }
+                            writeMergedRegion.write(System.lineSeparator()); // Adds a new line after the output
+                        }
+                    }
+                }
+            }
+            trajectoryStatForMergedWithRegion.put(objectId, trajChecks);
+
+        }
+        endTime = System.nanoTime();
+        duration = endTime - startTime;
+        durationInMillis = duration / 1_000_000;
+
+        System.out.println("Number of checks: " + totalConditionChecks);
+        System.out.println("Number of matches: " + resultCount);
+        System.out.println("Elapsed Time: " + durationInMillis);
+        writeMergedRegion.close();
+
+        ResultAnalyzer analyzer = new ResultAnalyzer();
+        analyzer.saveTopTrajectories(trajectoryStatWIthoutMerging, "ResultStat/sortedTrajSeparate_"+ numQueries);
+        analyzer.saveTopTrajectories(trajectoryStatForMergedWithoutRegion, "ResultStat/sortedTrajMergedWORegion_"+ numQueries);
+        analyzer.saveTopTrajectories(trajectoryStatForMergedWithRegion, "ResultStat/sortedTrajMergedRegion_"+ numQueries);
+        analyzer.savePerTrajectoryMatchInfo(pertrajMatcheInfo, "ResultStat/matchInfo_"+ numQueries);
     }
 }

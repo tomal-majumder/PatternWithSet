@@ -1,8 +1,11 @@
-package main.java;
 
-import com.esri.core.geometry.*;
+
+
 import java.io.*;
 import java.util.*;
+import com.esri.arcgisruntime.geometry.Point;
+import com.esri.arcgisruntime.geometry.Polygon;
+import com.esri.arcgisruntime.geometry.GeometryEngine;
 
 public class RegexQueryGenerator {
     private Map<String, Polygon> landmarkMap;  // Landmarks (name → polygon)
@@ -19,7 +22,7 @@ public class RegexQueryGenerator {
         List<String> queries = new ArrayList<>();
         int attempts = 0;  // Track how many times we try generating queries
 
-        while (queries.size() < numQueries && attempts < numQueries * 3) { // Extra attempts to ensure we get enough
+        while (queries.size() < numQueries) { // Extra attempts to ensure we get enough
             String query = generateSingleQuery();
             if (query != null && isValidQuery(query)) {
                 queries.add(query);
@@ -75,8 +78,7 @@ public class RegexQueryGenerator {
         for (Map.Entry<String, Polygon> entry : landmarkMap.entrySet()) {
             String landmarkName = entry.getKey();
             Polygon polygon = entry.getValue();
-            double distanceMeters = calculateDistanceToPolygon(point, polygon);
-
+            double distanceMeters = GeometryEngine.distanceBetween(polygon, point);
             if (distanceMeters <= thresholdDistanceMeters && distanceMeters < minDistanceMeters) {
                 minDistanceMeters = distanceMeters;
                 nearestLandmark = landmarkName;
@@ -86,22 +88,22 @@ public class RegexQueryGenerator {
         return nearestLandmark;
     }
 
-    private double calculateDistanceToPolygon(Point point, Polygon polygon) {
-        double minDistanceMeters = Double.MAX_VALUE;
-
-        for (int i = 0; i < polygon.getPathCount(); i++) {
-            for (int j = 0; j < polygon.getPointCount(); j++) {
-                Point polygonPoint = polygon.getPoint(j);
-                double distance = haversineDistance(point.getY(), point.getX(), polygonPoint.getY(), polygonPoint.getX());
-
-                if (distance < minDistanceMeters) {
-                    minDistanceMeters = distance;
-                }
-            }
-        }
-
-        return minDistanceMeters;
-    }
+//    private double calculateDistanceToPolygon(Point point, Polygon polygon) {
+//        double minDistanceMeters = Double.MAX_VALUE;
+//
+//        for (int i = 0; i < polygon.getPathCount(); i++) {
+//            for (int j = 0; j < polygon.getPointCount(); j++) {
+//                Point polygonPoint = polygon.getPoint(j);
+//                double distance = haversineDistance(point.getY(), point.getX(), polygonPoint.getY(), polygonPoint.getX());
+//
+//                if (distance < minDistanceMeters) {
+//                    minDistanceMeters = distance;
+//                }
+//            }
+//        }
+//
+//        return minDistanceMeters;
+//    }
 
     private double haversineDistance(double lat1, double lon1, double lat2, double lon2) {
         final double R = 6371000; // Earth's radius in meters
@@ -155,7 +157,7 @@ public class RegexQueryGenerator {
 
     public static void main(String[] args) {
         // Example data setup
-        String dataPath = "/home/tmaju002/Research/codes/Data/TrajectoryData/LA_small/";
+        String dataPath = "/Users/tomal/Desktop/MyWorkspace/Winter2025/Sumo_resource/LA_sumo/LA_small/";
         String trajectoryFilePath = dataPath + "trajectories.xml";
         String landmarkFilePath = dataPath + "smallLA.poly.xml";
         //get trajectory map
@@ -167,7 +169,7 @@ public class RegexQueryGenerator {
         Map<String, Polygon> landmarks = XMLPolygonParser.geometryMap;
         XMLPolygonParser.printStats();
 
-        int numQueries = 5;
+        int numQueries = 1000;
         RegexQueryGenerator queryGenerator = new RegexQueryGenerator(landmarks, trajectories, 100);
         List<String> queries = queryGenerator.generateQueries(numQueries);
         queryGenerator.saveQueriesToFile(queries, "queries/queries" + numQueries + ".txt");

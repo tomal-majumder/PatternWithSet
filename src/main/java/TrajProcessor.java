@@ -1,11 +1,14 @@
-package main.java;
 
+
+import com.esri.arcgisruntime.geometry.GeometryEngine;
+import com.esri.arcgisruntime.geometry.SpatialReference;
 import org.w3c.dom.*;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.DocumentBuilder;
 import java.io.File;
 import java.util.*;
-import com.esri.core.geometry.Point;
+//import com.esri.core.geometry.Point;
+import com.esri.arcgisruntime.geometry.Point;
 
 public class TrajProcessor {
 
@@ -25,6 +28,7 @@ public class TrajProcessor {
 
     public static Map<String, List<Point>> parseTrajectories(String filePath) {
         Map<String, List<Point>> trajectoryMap = new HashMap<>();
+        SpatialReference targetSR = SpatialReference.create(6423); // Web Mercator
 
         try {
             File inputFile = new File(filePath);
@@ -50,8 +54,10 @@ public class TrajProcessor {
                             double x = Double.parseDouble(objElement.getAttribute("x"));
                             double y = Double.parseDouble(objElement.getAttribute("y"));
 
-                            Point point = new Point(x, y);
-                            trajectoryMap.computeIfAbsent(id, k -> new ArrayList<>()).add(point);
+                            Point originalPoint = new Point(x, y, SpatialReference.create(4326));
+                            Point projectedPoint = (Point) GeometryEngine.project(originalPoint, targetSR);
+
+                            trajectoryMap.computeIfAbsent(id, k -> new ArrayList<>()).add(projectedPoint);
                         }
                     }
                 }
