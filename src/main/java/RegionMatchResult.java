@@ -1,8 +1,4 @@
-
-
 import com.esri.arcgisruntime.geometry.Point;
-import com.esri.arcgisruntime.geometry.Polygon;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;

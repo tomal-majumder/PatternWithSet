@@ -19,7 +19,7 @@ public class Main {
         Map<String, Integer> trajectoryStatForMergedWithoutRegion = new HashMap<>();
         Map<String, Integer> trajectoryStatForMergedWithRegion = new HashMap<>();
         Map<String, Integer> trajectoryStatWIthoutMerging = new HashMap<>();
-        int numQueries = 1000;
+        int numQueries = 100;
         RegexQueryGenerator queryGenerator = new RegexQueryGenerator(landmarks, trajectories, 100);
         //List<String> queries = queryGenerator.generateQueries(numQueries);
         //queryGenerator.saveQueriesToFile(queries, "queries/queries" + numQueries + ".txt");
@@ -133,7 +133,7 @@ public class Main {
             List<Point> points = entry.getValue();
             for(int i = 0; i < queryOriginalDFAs.size(); i++){
                 DFA dfaToCheck = queryOriginalDFAs.get(i);
-                Pair<Integer, List<RegionMatchResult>> matches = matcher.matchesUpdated(points, dfaToCheck, landmarks, 50, 1, originalDFAMap);
+                Pair<Integer, List<RegionMatchResult>> matches = matcher.matchesUpdated(points, dfaToCheck, landmarks, 10, 1, originalDFAMap);
                 totalConditionChecks += matches.getLeft();
                 perTrajChecks += matches.getLeft();
                 for(int j = 0; j < matches.getRight().size(); j++){
@@ -171,7 +171,7 @@ public class Main {
             String objectId = entry.getKey();
             List<Point> points = entry.getValue();
             int trajChecks = 0;
-            Pair<Integer, List<RegionMatchResult>> matches = matcher.matchesUpdated(points, mergedDFA, landmarks, 50, 2, originalDFAMap);
+            Pair<Integer, List<RegionMatchResult>> matches = matcher.matchesUpdated(points, mergedDFA, landmarks, 10, 2, originalDFAMap);
             totalConditionChecks += matches.getLeft();
             trajChecks += matches.getLeft();
             trajectoryStatForMergedWithoutRegion.put(objectId, trajChecks);
@@ -210,7 +210,7 @@ public class Main {
             String objectId = entry.getKey();
             List<Point> points = entry.getValue();
             int trajChecks = 0;
-            Pair<Integer, List<RegionMatchResult>> matches = matcher.matchesUpdated(points, mergedRegionDFA, regionMBR, 20, 3, originalDFAMap);
+            Pair<Integer, List<RegionMatchResult>> matches = matcher.matchesUpdated(points, mergedRegionDFA, regionMBR, 10, 3, originalDFAMap);
             totalConditionChecks += matches.getLeft();
             trajChecks += matches.getLeft();
             Set<Integer> matchedQueries = new HashSet<>();
@@ -220,7 +220,7 @@ public class Main {
                 HashSet<Integer> queryIDs = regionMatchResult.queryIDs;
                 for(Integer queryID: queryIDs){
                     if(!matchedQueries.contains(queryID)){
-                        Pair<Integer, Boolean> integerBooleanPair = matcher.matchesOriginalUpdated(trajectory, originalDFAMap.get(queryID), landmarks, 100);
+                        Pair<Integer, Boolean> integerBooleanPair = matcher.matchesOriginalUpdated(trajectory, originalDFAMap.get(queryID), landmarks, 10);
                         totalConditionChecks += integerBooleanPair.getLeft();
                         trajChecks += integerBooleanPair.getLeft();
                         if(integerBooleanPair.getRight()){

@@ -1,5 +1,3 @@
-
-
 import java.io.IOException;
 import java.util.*;
 
@@ -332,7 +330,7 @@ public class RegexToNFA {
 
     public static void main(String[] args) throws IOException, InterruptedException {
         Set<String> symbolSet = new HashSet<>();
-        int type = 2;
+        int type = 1;
         int numberOfSymbols = 5;
         if(type == 1){
             // Generate strings r1, r2, ..., rN and add to allSymbolSet
@@ -346,27 +344,29 @@ public class RegexToNFA {
             }
         }
         RegexToNFA converter = new RegexToNFA(symbolSet);
-        NFA nfa1 = converter.convertToNFA("R1.?*.R2.?*.R3");
-        //nfa1.generateDiagram("nfa_1");
-        NFA nfa2 = converter.convertToNFA("R1.?*.R2.?*.R4");
-        //NFA nfa3 = converter.convertToNFA("r1.?*.r2.?*.r8");
+        NFA nfa1 = converter.convertToNFA("r1.?*.r3");
+        nfa1.generateDiagram("nfa_1");
+        NFA nfa2 = converter.convertToNFA("r1.?*.r3");
+        NFA nfa3 = converter.convertToNFA("r1.r4.r5");
         //nfa2.generateDiagram("nfa_2");
 //        NFA nfa3 = converter.convertToNFA("r2.?*.r8.?*.r12");
 //        nfa3.generateDiagram("nfa_3");
 //        //nfa.setID(1);
         DFA dfa1 = converter.convertToDFA(nfa1);
         //dfa1.minimizeDFA();
-        //dfa1.generateDiagram("dfa_1");
+        dfa1.generateDiagram("dfa_1");
         dfa1.minimizeDFA();
         dfa1.generateDiagram("min_dfa_1");
 
 //
         DFA dfa2 = converter.convertToDFA(nfa2);
-        //dfa2.generateDiagram("normal_dfa_2");
-        dfa2.minimizeDFA();
         dfa2.generateDiagram("dfa_2");
-        //DFA dfa3 = converter.convertToDFA(nfa3);
-        //dfa3.minimizeDFA();
+        dfa2.minimizeDFA();
+        dfa2.generateDiagram("min_dfa_2");
+        DFA dfa3 = converter.convertToDFA(nfa3);
+        dfa3.generateDiagram("dfa_3");
+        dfa3.minimizeDFA();
+        dfa3.generateDiagram("min_dfa3");
         NFA mergedNFA = new NFA(converter.allSymbolSet);
         int mergedStart = mergedNFA.getStartState();
 //        mergedNFA.addTransition(mergedStart, "ε", nfa1.getStartState());
